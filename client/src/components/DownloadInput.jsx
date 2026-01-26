@@ -29,7 +29,12 @@ export default function DownloadInput() {
             }, 500);
         } catch (err) {
             console.error(err);
-            fetchFileError(err.error || 'File not found');
+            // Edge Case 10: Invalid Code Format
+            let msg = err.error || 'File not found';
+            if (msg.includes('not found')) {
+                msg = 'INVALID CODE';
+            }
+            fetchFileError(msg);
             setIsLoading(false);
         }
     };

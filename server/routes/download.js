@@ -20,18 +20,36 @@ router.get('/:code', (req, res) => {
     // Handle new metadata structure (array of files)
     const files = fileData.files || [fileData]; // Backward compat
 
+    // Check download limits
+    if (fileData.downloads >= fileData.maxDownloads) {
+        if (files.length === 1 && !res.headersSent) {
+            return res.status(403).json({ error: 'DOWNLOAD LIMIT REACHED' });
+        }
+        // Also block zip downloads
+        if (files.length > 1 && !res.headersSent) {
+            return res.status(403).json({ error: 'DOWNLOAD LIMIT REACHED' });
+        }
+    }
+
+    // Callback for successful download tracking
+    const onDownloadComplete = (err) => {
+        if (!err) {
+            fileData.downloads = (fileData.downloads || 0) + 1;
+            store.save(code, fileData); // Update store
+            console.log(`Download complete for ${code}. Count: ${fileData.downloads}/${fileData.maxDownloads}`);
+        } else {
+            console.error('Download aborted:', err);
+            // Do not increment on failure
+        }
+    };
+
     // If single file, download directly
     if (files.length === 1) {
         const file = files[0];
         if (!fs.existsSync(file.path)) {
             return res.status(404).json({ error: 'File missing from server' });
         }
-        return res.download(file.path, file.originalName, (err) => {
-            if (err && !res.headersSent) {
-                console.error('Download error:', err);
-                res.status(500).json({ error: 'Error downloading file' });
-            }
-        });
+        return res.download(file.path, file.originalName, onDownloadComplete);
     }
 
     // If multiple files, zip them
@@ -51,8 +69,20 @@ router.get('/:code', (req, res) => {
     archive.on('error', function (err) {
         console.error('Zip error:', err);
         if (!res.headersSent) {
-            res.status(500).json({ error: 'Error creating zip' });
+            res.status(500).json({ error: 'FAILED TO PACKAGE FILES' });
         }
+    });
+
+    // Listen for finish evt to count success
+    res.on('finish', () => {
+        onDownloadComplete(null);
+    });
+
+    // Handle abort
+    res.on('close', () => {
+        // If request closed prematurely, headers might be sent but response not finished
+        // Express doesn't easily expose "finished successfully" vs "aborted" in 'close'
+        // But 'finish' fires on success.
     });
 
     archive.pipe(res);

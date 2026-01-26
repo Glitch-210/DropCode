@@ -12,12 +12,25 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, 'tmp/uploads')
 // Ensure upload directory exists
 if (!fs.existsSync(UPLOAD_DIR)) {
     fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+} else {
+    // Edge Case 15: Server Restart - Cleanup orphans
+    console.log('Cleaning up orphaned files...');
+    fs.readdirSync(UPLOAD_DIR).forEach(file => {
+        const filePath = path.join(UPLOAD_DIR, file);
+        try {
+            fs.unlinkSync(filePath);
+        } catch (err) {
+            console.error(`Failed to delete orphan ${filePath}:`, err);
+        }
+    });
 }
 
 const app = express();
 
-// Middleware
+// Basic middleware
 app.use(cors());
+app.use(express.json()); // Support JSON body for PATCH
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // Routes
