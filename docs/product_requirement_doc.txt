@@ -1,0 +1,335 @@
+PRODUCT REQUIREMENT DOCUMENT (PRD)
+Product Name: DropCode
+
+1. Purpose & Vision
+Problem Statement
+
+Current browser-based file transfer tools (e.g., Wormhole) rely heavily on long links or QR codes for cross-device file sharing. This introduces friction when users want to quickly transfer files from a PC to a mobile device without scanning QR codes or handling long URLs.
+
+Vision
+
+Create a single-page, ultra-fast file-sharing web app that enables users to:
+
+Upload files on one device
+
+Receive a short, human-readable code
+
+Enter that code on another device
+
+Instantly download the file
+
+The experience should be faster, simpler, and more human-friendly than existing solutions.
+
+2. Goals & Success Metrics
+Primary Goals
+
+Reduce steps required for PC → mobile file transfer
+
+Eliminate dependency on QR codes
+
+Provide an intuitive, distraction-free UI
+
+Enable instant usage without login or setup
+
+Success Metrics (MVP)
+
+Time from upload → download < 15 seconds
+
+User can complete transfer with ≤ 2 actions per device
+
+< 1% failed transfers
+
+Works smoothly on mobile and desktop browsers
+
+3. Target Users
+Primary Users
+
+Students
+
+Developers
+
+Office workers
+
+Designers
+
+Anyone frequently transferring files between devices
+
+Use Cases
+
+PC → phone (most common)
+
+Phone → PC
+
+Sharing files in classrooms or meetings
+
+Temporary file sharing without permanent storage
+
+4. Scope Definition
+In Scope (MVP)
+
+Single-page web application
+
+File upload via drag & drop or file picker
+
+Short code generation for each upload
+
+File retrieval using short code
+
+Automatic expiry of files
+
+Download on any device/browser
+
+Out of Scope (MVP)
+
+User accounts
+
+File history
+
+Folder uploads
+
+Cloud storage sync
+
+File editing or preview
+
+Mobile native apps
+
+5. Core Features & Requirements
+5.1 File Upload
+
+Users can upload a single file
+
+Supported file types: All
+
+Maximum file size (MVP): 200 MB (configurable)
+
+Upload begins immediately after file selection
+
+Upload progress indicator required
+
+5.2 Code Generation (Key Feature)
+
+System generates a short, human-readable code
+
+Code formats (choose one for MVP):
+
+Alphanumeric (e.g., F7K9Q)
+
+Word-based (e.g., blue-moon)
+
+Code must be:
+
+Easy to read
+
+Easy to type
+
+Case-insensitive
+
+Code is displayed prominently after upload
+
+5.3 File Retrieval
+
+User enters code on any device
+
+System validates code
+
+If valid:
+
+File metadata is shown (name, size)
+
+Download begins immediately or on tap
+
+If invalid or expired:
+
+Clear, friendly error message
+
+5.4 Expiry & Cleanup
+
+Default expiry time: 10 minutes
+
+File automatically deleted after expiry
+
+Code becomes invalid once file is deleted
+
+Optional one-time download flag (post-MVP)
+
+6. User Experience (UX) Requirements
+6.1 General UX Principles
+
+Zero learning curve
+
+Minimal text
+
+No tutorials
+
+No sign-up or login
+
+Clear visual hierarchy
+
+Calm, human-friendly language
+
+6.2 Upload Screen (Desktop)
+
+Drag & drop zone centered
+
+“Click to upload” fallback
+
+After upload:
+
+Code shown in large font
+
+Copy button
+
+Expiry timer visible
+
+Optional QR (secondary)
+
+6.3 Download Screen (Mobile-first)
+
+Input field for code
+
+Large “Get File” button
+
+Auto-focus on input
+
+Minimal distractions
+
+Clear error feedback
+
+7. UI / Design Requirements
+Visual Style
+
+Light background with soft gradients
+
+Rounded corners
+
+Subtle motion (micro-interactions)
+
+Friendly typography
+
+No “enterprise” or “developer-only” look
+
+Design Tone
+
+Human
+
+Calm
+
+Fast
+
+Trustworthy
+
+Accessibility
+
+High contrast text
+
+Large touch targets
+
+Works without camera permissions
+
+8. Technical Requirements (High-Level)
+Frontend
+
+Single Page Application (SPA)
+
+Responsive (mobile-first)
+
+Works on modern browsers
+
+No page reloads during flow
+
+Backend
+
+File upload handling
+
+Temporary file storage
+
+Code-to-file mapping
+
+Expiry management
+
+Secure download endpoint
+
+9. Security Considerations
+
+All traffic over HTTPS
+
+Codes must be random and non-guessable
+
+Files not publicly indexed
+
+Automatic cleanup to prevent data leakage
+
+No permanent storage of files
+
+10. Performance Requirements
+
+Upload initiation < 1 second
+
+Code generation < 300ms
+
+Download start < 1 second after code entry
+
+App loads under 2 seconds on mobile data
+
+11. Error Handling
+Upload Errors
+
+File too large
+
+Network interruption
+
+Server unavailable
+
+Retrieval Errors
+
+Invalid code
+
+Expired file
+
+File already downloaded (if one-time)
+
+All errors must use simple, friendly language.
+
+12. Future Enhancements (Post-MVP)
+
+Multi-file uploads
+
+Folder sharing
+
+Password-protected codes
+
+File preview
+
+Download analytics
+
+PWA support
+
+Nearby-device detection
+
+Team / session-based sharing
+
+13. Risks & Mitigations
+Risk	Mitigation
+Code collisions	Increase code space & randomness
+Storage abuse	File size limits + expiry
+Guessable codes	Strong random generation
+Server cost	Strict auto cleanup
+14. MVP Definition (Final)
+
+The MVP is complete when:
+
+A user can upload a file
+
+Receive a short code
+
+Enter the code on another device
+
+Download the file
+
+File auto-deletes after expiry
+
+No extra features required.
+
+15. Summary
+
+DropCode aims to replace traditional link/QR-based file sharing by introducing a code-first, human-friendly file transfer experience. The product prioritizes speed, simplicity, and usability over feature bloat, making it ideal for quick, everyday cross-device transfers.

@@ -1,0 +1,308 @@
+1. Tech Stack Philosophy
+Core Principles
+
+Boring technology, exciting UX
+
+Minimal moving parts
+
+Fast to build, easy to reason about
+
+Scales when needed, not before
+
+DropCode is a utility, not a platform.
+
+2. High-Level Architecture
+Client (Browser SPA)
+        ↓
+   API Server
+        ↓
+ Temporary File Storage
+
+
+No accounts.
+No databases (initially).
+No long-lived state.
+
+3. Frontend Stack
+Framework
+
+React + Vite
+
+Why
+
+Extremely fast dev experience
+
+Perfect for SPA
+
+Easy state-driven UI
+
+Small bundle size
+
+(Next.js is intentionally avoided for MVP to reduce complexity)
+
+Styling
+
+Tailwind CSS
+
+Why
+
+Utility-first = perfect for neo-brutalism
+
+Thick borders, hard edges, bold typography
+
+No over-styled components
+
+Rapid iteration
+
+Design system enforced via:
+
+Custom Tailwind config
+
+Limited color palette
+
+Strict spacing scale
+
+Animations
+
+Framer Motion (limited use)
+
+Usage Rules
+
+State transitions only
+
+Button press feedback
+
+No decorative motion
+
+State Management
+
+React local state + Context
+
+Why
+
+Simple app
+
+Predictable UI states
+
+No Redux overhead
+
+Device Support
+
+Responsive by default
+
+Mobile-first download flow
+
+Desktop-first upload flow
+
+4. Backend Stack
+Runtime
+
+Node.js (LTS)
+
+Framework
+
+Express.js
+
+Why
+
+Minimal
+
+Well-understood
+
+Easy to secure
+
+Easy to deploy
+
+File Upload Handling
+
+Multer
+
+Streams file uploads
+
+Supports size limits
+
+Works well with Express
+
+Code Generation
+
+Custom utility
+
+Randomized
+
+Case-insensitive
+
+Collision-checked
+
+Format: XXXX or word-word
+
+Temporary Storage
+
+Local Disk (MVP)
+
+Files stored in /tmp/uploads
+
+Mapped via in-memory store
+
+Cloud object storage (S3 / R2) comes later
+
+In-Memory Store
+
+Map / LRU Cache
+
+Stores:
+
+code → filePath
+
+expiry timestamp
+
+download count
+
+This avoids DB overhead in MVP.
+
+5. API Design
+Upload API
+POST /api/upload
+
+
+Accepts multipart file
+
+Returns:
+
+code
+
+expiry time
+
+file metadata
+
+Fetch Metadata
+GET /api/file/:code
+
+
+Validates code
+
+Returns file info
+
+Errors if expired or invalid
+
+Download API
+GET /api/download/:code
+
+
+Streams file
+
+Invalidates code if one-time
+
+Triggers cleanup
+
+6. Expiry & Cleanup System
+Strategy
+
+Each upload has TTL (default 10 min)
+
+Background cleanup job runs every minute
+
+Deletes expired files
+
+Clears in-memory references
+
+No cron dependency for MVP.
+
+7. Security Considerations
+
+HTTPS enforced
+
+File size limits
+
+MIME-type validation (basic)
+
+Randomized code space
+
+No public file URLs
+
+Auto-expiry mandatory
+
+8. Performance Targets
+Area	Target
+SPA load	< 2s
+Upload start	< 1s
+Code generation	< 300ms
+Download start	< 1s
+Cleanup lag	< 60s
+9. Deployment Stack (MVP)
+Hosting
+
+Vercel / Netlify (frontend)
+
+Render / Railway / Fly.io (backend)
+
+Environment
+
+Linux container
+
+Node LTS
+
+Environment-based config
+
+10. Monitoring & Logging (Minimal)
+
+Console logs (MVP)
+
+Error logging for:
+
+upload failures
+
+expired code access
+
+Basic health endpoint
+
+11. Future Tech Upgrades (Post-MVP)
+
+Cloud storage (S3 / Cloudflare R2)
+
+Redis for code store
+
+WebSockets for live status sync
+
+PWA support
+
+Rate limiting
+
+Password-protected codes
+
+12. What We Intentionally Avoided
+
+❌ Databases
+
+❌ Authentication systems
+
+❌ Microservices
+
+❌ GraphQL
+
+❌ Server-side rendering
+
+❌ Over-abstracted frontend frameworks
+
+All unnecessary for MVP.
+
+13. Summary
+
+DropCode’s tech stack is:
+
+Simple
+
+Fast
+
+Cheap
+
+Reliable
+
+It prioritizes UX speed and clarity over technical flexing.
+
+This stack lets us:
+
+Build fast
+
+Iterate faster
+
+Replace Wormhole for everyday transfers

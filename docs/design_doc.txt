@@ -1,0 +1,389 @@
+DROPcode — DESIGN DOCUMENT
+(Neo-Brutalist UI/UX Edition)
+1. Design Philosophy
+Core Belief
+
+Speed over polish. Clarity over comfort. Function over decoration.
+
+DropCode’s neo-brutalist design should feel:
+
+Loud but honest
+
+Raw but intentional
+
+Simple but confident
+
+This is not “pretty UI”.
+This is utility with attitude.
+
+2. Why Neo-Brutalism for DropCode
+
+Neo-brutalism aligns perfectly with DropCode’s core idea:
+
+File transfer is functional, not emotional
+
+Users want immediacy, not elegance
+
+Codes should feel authoritative, not subtle
+
+Neo-brutalism:
+
+Makes the code unmissable
+
+Reduces visual ambiguity
+
+Creates memorability (important for brand recall)
+
+Differentiates DropCode instantly from Wormhole-like tools
+
+3. Design Principles (Non-Negotiable)
+
+Everything looks intentional
+
+No soft shadows, no glass, no gradients
+
+UI elements look clickable
+
+Text is bold, readable, unapologetic
+
+Layout feels constructed, not fluid
+
+Minimal animations, maximum clarity
+
+If something feels “smooth” → it’s probably wrong.
+
+4. Information Architecture
+Single Page, State-Driven UI
+
+No routes. No menus. No onboarding.
+
+UI switches between states, not pages:
+
+Idle (Upload)
+
+Uploading
+
+Code Generated
+
+Download Entry
+
+Downloading
+
+Expired / Error
+
+Each state occupies the entire viewport.
+
+5. Layout System
+Grid
+
+Simple vertical stack
+
+Center-aligned main action
+
+Hard edges, strict spacing
+
+Containers
+
+Thick borders (2–4px)
+
+Solid background blocks
+
+No elevation or depth illusion
+
+6. Visual Language
+6.1 Color System
+
+One dominant background color at a time
+
+One accent color (used sparingly)
+
+Black or near-black borders
+
+White or near-white text for contrast
+
+Examples (conceptual):
+
+Background: off-white / pastel yellow / muted mint
+
+Accent: electric blue / red / black
+
+No gradients. Ever.
+
+6.2 Typography
+
+Primary Font
+
+Bold grotesk or industrial sans-serif
+
+Large sizes
+
+Tight line height
+
+Code Font
+
+Monospace
+
+Extra bold
+
+Wide letter spacing
+
+Visually dominant
+
+Typography is the UI.
+
+6.3 Shapes
+
+Rectangles
+
+Sharp corners
+
+No pills
+
+No circles (except icons if unavoidable)
+
+7. Component Design
+7.1 Upload State (Idle)
+
+Layout
+
+Full screen block
+
+Huge bordered upload box
+
+Text inside box (not below it)
+
+Visual Treatment
+
+Thick border
+
+Loud background
+
+Upload zone looks like a physical surface
+
+Microcopy
+
+“DROP FILE HERE”
+
+“CLICK IF YOU MUST”
+
+Tone is confident, slightly playful, never polite.
+
+7.2 Uploading State
+
+Behavior
+
+Upload box transforms into progress container
+
+Border stays constant
+
+Interior content changes
+
+Components
+
+File name (bold)
+
+Progress bar (solid fill, no animation easing)
+
+Percentage number (large, readable)
+
+No spinners.
+
+7.3 Code Generated State (Hero Moment)
+
+This is the most important screen.
+
+Layout Priority
+
+CODE (huge, center)
+
+Instruction text
+
+Expiry timer
+
+Secondary actions
+
+Design Rules
+
+Code must dominate the screen
+
+Thick border around code block
+
+High contrast background
+
+Copy button looks like a real button
+
+Microcopy
+
+“YOUR CODE”
+
+“TYPE THIS ON YOUR OTHER DEVICE”
+
+“EXPIRES IN 10:00”
+
+QR code (if present) is:
+
+Smaller
+
+Lower contrast
+
+Clearly secondary
+
+7.4 Download Entry State (Mobile-First)
+
+Layout
+
+Full screen
+
+Input field as a bold rectangle
+
+CTA button directly below
+
+Behavior
+
+Auto-focus input
+
+Keyboard optimized
+
+Immediate validation feedback
+
+Microcopy
+
+“ENTER CODE”
+
+“GET FILE”
+
+No helper text unless error occurs.
+
+7.5 Downloading State
+
+Visuals
+
+Progress bar with sharp edges
+
+File name in bold
+
+Size info secondary
+
+Behavior
+
+Download starts immediately
+
+No intermediate confirmation screens
+
+7.6 Error & Expiry States
+
+Tone
+
+Honest
+
+Direct
+
+Calm
+
+Examples
+
+“CODE EXPIRED”
+
+“FILE NOT FOUND”
+
+“ASK FOR A NEW CODE”
+
+No illustrations. No emojis.
+Text carries the message.
+
+8. Motion & Interaction
+
+Neo-brutalism uses minimal, purposeful motion.
+
+Allowed:
+
+State transitions (instant or near-instant)
+
+Button press feedback
+
+Progress fill
+
+Not allowed:
+
+Bouncy animations
+
+Delays for aesthetics
+
+Decorative motion
+
+If motion doesn’t explain state → remove it.
+
+9. Accessibility & Usability
+
+Large fonts
+
+High contrast
+
+Clear hit areas
+
+Keyboard usable
+
+No reliance on color alone
+
+Works without camera or permissions
+
+Neo-brutalism must still be usable, not hostile.
+
+10. Brand Personality (UI Voice)
+
+DropCode speaks like:
+
+A confident tool
+
+Slightly blunt
+
+Never apologetic
+
+Never verbose
+
+Examples:
+
+❌ “Please upload your file”
+
+✅ “DROP FILE”
+
+❌ “Something went wrong”
+
+✅ “UPLOAD FAILED”
+
+11. Design Guardrails (What We Will NOT Do)
+
+❌ Glassmorphism
+
+❌ Gradients
+
+❌ Soft shadows
+
+❌ Rounded blobs
+
+❌ Over-animation
+
+❌ Cute illustrations
+
+If it looks trendy → question it.
+
+12. Design Success Criteria
+
+The design succeeds if:
+
+Users understand the app in 3 seconds
+
+The code is readable from across the room
+
+The UI feels faster than Wormhole
+
+The product feels confident, not decorative
+
+13. Summary
+
+DropCode’s neo-brutalist design turns a simple utility into a bold, memorable product.
+
+It doesn’t try to be friendly.
+It tries to be clear.
+
+And clarity wins.
