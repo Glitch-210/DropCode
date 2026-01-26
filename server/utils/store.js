@@ -51,14 +51,20 @@ class FileStore {
 
         for (const [code, metadata] of this.store.entries()) {
             if (now > metadata.expiresAt) {
-                // Remove from disk
-                try {
-                    if (fs.existsSync(metadata.path)) {
-                        fs.unlinkSync(metadata.path);
+                // Remove files from disk
+                // Support both legacy (single file) and new (array) structure for backward compatibility
+                const files = metadata.files || [metadata]; // Handle legacy or single file structure if needed
+
+                files.forEach(file => {
+                    try {
+                        if (file.path && fs.existsSync(file.path)) {
+                            fs.unlinkSync(file.path);
+                        }
+                    } catch (err) {
+                        console.error(`Failed to delete file ${file.path}:`, err);
                     }
-                } catch (err) {
-                    console.error(`Failed to delete file ${metadata.path}:`, err);
-                }
+                });
+
                 // Remove from store
                 this.store.delete(code);
                 count++;

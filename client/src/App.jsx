@@ -28,7 +28,14 @@ function Main() {
       </div>
 
       <div className="brutal-container" style={{ maxWidth: '600px', width: '100%', minHeight: '400px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <h1 className="text-center" style={{ marginBottom: 'var(--space-xl)' }} onClick={reset} role="button">
+        <h1
+          className="text-center"
+          style={{ marginBottom: 'var(--space-xl)', cursor: 'pointer' }}
+          onClick={reset}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && reset()}
+        >
           DropCode
         </h1>
 

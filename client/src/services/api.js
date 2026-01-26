@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 /**
  * Upload a file to the backend.
@@ -8,9 +8,14 @@ const API_BASE = 'http://localhost:3000/api';
  * @param {Function} onProgress - Callback for upload progress (0-100)
  * @returns {Promise<Object>} - The response data (code, expiresAt, etc.)
  */
-export const uploadFile = async (file, onProgress) => {
+export const uploadFile = async (files, onProgress) => {
     const formData = new FormData();
-    formData.append('file', file);
+    // Support both single file and array/FileList
+    const fileList = files.length !== undefined ? files : [files];
+
+    for (let i = 0; i < fileList.length; i++) {
+        formData.append('files', fileList[i]);
+    }
 
     try {
         const response = await axios.post(`${API_BASE}/upload`, formData, {

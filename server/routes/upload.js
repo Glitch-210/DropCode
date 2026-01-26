@@ -25,9 +25,10 @@ const upload = multer({
 });
 
 // POST /api/upload
-router.post('/', upload.single('file'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
+router.post('/', upload.array('files'), (req, res) => {
+    // Check if files were uploaded (req.files array)
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: 'No files uploaded' });
     }
 
     try {
@@ -47,12 +48,25 @@ router.post('/', upload.single('file'), (req, res) => {
         const expiryMs = parseInt(process.env.FILE_EXPIRY_MS) || 10 * 60 * 1000;
         const expiresAt = Date.now() + expiryMs;
 
+        // Map files to metadata format
+        const filesMetadata = req.files.map(file => ({
+            originalName: file.originalname,
+            mimeType: file.mimetype,
+            size: file.size,
+            path: file.path
+        }));
+
+        // Calculate total size and determine primary name for display
+        const totalSize = filesMetadata.reduce((acc, curr) => acc + curr.size, 0);
+        const displayName = filesMetadata.length === 1
+            ? filesMetadata[0].originalName
+            : `${filesMetadata.length} files`;
+
         const metadata = {
             code,
-            originalName: req.file.originalname,
-            mimeType: req.file.mimetype,
-            size: req.file.size,
-            path: req.file.path,
+            files: filesMetadata,
+            originalName: displayName, // Backward compatibility for display
+            size: totalSize,           // Total size
             expiresAt
         };
 
@@ -61,8 +75,9 @@ router.post('/', upload.single('file'), (req, res) => {
         res.json({
             code,
             expiresAt,
-            originalName: metadata.originalName,
-            size: metadata.size
+            originalName: displayName,
+            size: totalSize,
+            fileCount: filesMetadata.length
         });
 
     } catch (err) {

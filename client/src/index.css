@@ -7,28 +7,37 @@
 /* Custom CSS Variables for Neo-Brutalist Design */
 :root {
   /* Primary Colors - Bold, intentional palette */
-  --color-bg-primary: #FFFEF0;      /* Off-white / cream */
-  --color-bg-accent: #FFE566;       /* Pastel yellow */
-  --color-bg-mint: #A8E6CF;         /* Muted mint */
-  
+  --color-bg-primary: #FFFEF0;
+  /* Off-white / cream */
+  --color-bg-accent: #FFE566;
+  /* Pastel yellow */
+  --color-bg-mint: #A8E6CF;
+  /* Muted mint */
+
   /* Text & Border Colors */
-  --color-text-primary: #1A1A1A;    /* Near-black */
-  --color-text-inverse: #FFFEF0;    /* Off-white for dark backgrounds */
-  --color-border: #1A1A1A;          /* Black borders */
-  
+  --color-text-primary: #1A1A1A;
+  /* Near-black */
+  --color-text-inverse: #FFFEF0;
+  /* Off-white for dark backgrounds */
+  --color-border: #1A1A1A;
+  /* Black borders */
+
   /* Accent Colors */
-  --color-accent-blue: #3B82F6;     /* Electric blue */
-  --color-accent-red: #EF4444;      /* Alert red */
-  --color-accent-green: #22C55E;    /* Success green */
-  
+  --color-accent-blue: #3B82F6;
+  /* Electric blue */
+  --color-accent-red: #EF4444;
+  /* Alert red */
+  --color-accent-green: #22C55E;
+  /* Success green */
+
   /* Border Widths - Thick, intentional */
   --border-thin: 2px;
   --border-thick: 4px;
-  
+
   /* Typography */
   --font-primary: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
-  
+
   /* Spacing Scale */
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
@@ -40,7 +49,9 @@
 }
 
 /* Base Reset */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -69,7 +80,12 @@ body {
 }
 
 /* Typography - Bold, unapologetic */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -193,10 +209,21 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Utility Classes */
-.text-center { text-align: center; }
-.text-mono { font-family: var(--font-mono); }
-.font-bold { font-weight: 800; }
-.uppercase { text-transform: uppercase; }
+.text-center {
+  text-align: center;
+}
+
+.text-mono {
+  font-family: var(--font-mono);
+}
+
+.font-bold {
+  font-weight: 800;
+}
+
+.uppercase {
+  text-transform: uppercase;
+}
 
 /* Full Height Layout */
 .full-screen {
@@ -206,4 +233,30 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   justify-content: center;
   padding: var(--space-lg);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+  :root {
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+    --space-2xl: 2rem;
+  }
+
+  .brutal-container {
+    padding: var(--space-md);
+  }
+
+  .brutal-upload-zone {
+    min-height: 200px;
+    padding: var(--space-lg);
+  }
+
+  .brutal-code {
+    padding: var(--space-md);
+  }
+
+  h1 {
+    font-size: 2.5rem;
+  }
 }

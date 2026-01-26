@@ -7,18 +7,26 @@ export default function UploadZone() {
     const [isDragOver, setIsDragOver] = useState(false);
     const fileInputRef = useRef(null);
 
-    const handleFile = async (file) => {
-        if (!file) return;
+    const handleFile = async (files) => {
+        if (!files || files.length === 0) return;
 
-        // Check MVP file size limit (200MB)
-        if (file.size > 200 * 1024 * 1024) {
-            alert('File too large (Max 200MB)'); // Simple alert for MVP
+        // Calculate total size
+        let totalSize = 0;
+        const fileList = files.length !== undefined ? Array.from(files) : [files];
+
+        for (const file of fileList) {
+            totalSize += file.size;
+        }
+
+        // Check MVP file size limit (200MB total)
+        if (totalSize > 200 * 1024 * 1024) {
+            alert('Total size too large (Max 200MB)'); // Simple alert for MVP
             return;
         }
 
         startUpload();
         try {
-            const data = await uploadFile(file, (percent) => {
+            const data = await uploadFile(fileList, (percent) => {
                 setProgress(percent);
             });
             // Small delay to ensure users see 100% completion
@@ -34,8 +42,8 @@ export default function UploadZone() {
     const onDrop = (e) => {
         e.preventDefault();
         setIsDragOver(false);
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            handleFile(e.dataTransfer.files[0]);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleFile(e.dataTransfer.files);
         }
     };
 
@@ -58,9 +66,11 @@ export default function UploadZone() {
         >
             <input
                 type="file"
+                multiple
                 style={{ display: 'none' }}
                 ref={fileInputRef}
-                onChange={(e) => handleFile(e.target.files[0])}
+                onChange={(e) => handleFile(e.target.files)}
+                aria-label="Upload File"
             />
             <p className="font-bold uppercase" style={{ fontSize: '1.5rem', pointerEvents: 'none' }}>
                 {isDragOver ? "Drop It!" : "Drop File Here"}

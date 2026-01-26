@@ -17,21 +17,53 @@ router.get('/:code', (req, res) => {
         return res.status(404).json({ error: 'File expired' });
     }
 
-    // Check if file exists on disk
-    if (!fs.existsSync(fileData.path)) {
-        store.remove(code);
-        return res.status(404).json({ error: 'File missing from server' });
-    }
+    // Handle new metadata structure (array of files)
+    const files = fileData.files || [fileData]; // Backward compat
 
-    // Download file
-    res.download(fileData.path, fileData.originalName, (err) => {
-        if (err) {
-            console.error('Download error:', err);
-            if (!res.headersSent) {
+    // If single file, download directly
+    if (files.length === 1) {
+        const file = files[0];
+        if (!fs.existsSync(file.path)) {
+            return res.status(404).json({ error: 'File missing from server' });
+        }
+        return res.download(file.path, file.originalName, (err) => {
+            if (err && !res.headersSent) {
+                console.error('Download error:', err);
                 res.status(500).json({ error: 'Error downloading file' });
             }
+        });
+    }
+
+    // If multiple files, zip them
+    const archiver = require('archiver');
+    const archive = archiver('zip', { zlib: { level: 9 } });
+
+    res.attachment('dropcode-files.zip');
+
+    archive.on('warning', function (err) {
+        if (err.code === 'ENOENT') {
+            console.warn(err);
+        } else {
+            throw err;
         }
     });
+
+    archive.on('error', function (err) {
+        console.error('Zip error:', err);
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Error creating zip' });
+        }
+    });
+
+    archive.pipe(res);
+
+    files.forEach(file => {
+        if (fs.existsSync(file.path)) {
+            archive.file(file.path, { name: file.originalName });
+        }
+    });
+
+    archive.finalize();
 });
 
 module.exports = router;

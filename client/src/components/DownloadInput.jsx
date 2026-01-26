@@ -50,6 +50,7 @@ export default function DownloadInput() {
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
                     disabled={isLoading}
+                    aria-label="Enter download code"
                 />
 
                 <button

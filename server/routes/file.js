@@ -22,7 +22,8 @@ router.get('/:code', (req, res) => {
         originalName: fileData.originalName,
         size: fileData.size,
         mimeType: fileData.mimeType,
-        expiresAt: fileData.expiresAt
+        expiresAt: fileData.expiresAt,
+        fileCount: (fileData.files || []).length || 1
     });
 });
 
