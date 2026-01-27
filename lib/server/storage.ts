@@ -1,3 +1,4 @@
+import "server-only";
 import { redis } from './redis';
 
 export type FileMetadata = {
