@@ -1,4 +1,4 @@
-import fs from 'fs';
+import { redis } from './redis';
 
 export type FileMetadata = {
     code: string;
@@ -6,7 +6,8 @@ export type FileMetadata = {
         originalName: string;
         mimeType: string;
         size: number;
-        path: string;
+        storageKey?: string; // Redis key for file content
+        path?: string; // Legacy support (optional)
     }>;
     originalName: string;
     size: number;
@@ -17,43 +18,50 @@ export type FileMetadata = {
     maxDownloads: number;
 };
 
-// Global store to persist across hot-reloads/warm lambdas
-const globalStore = (global as any).fileStore || new Map<string, FileMetadata>();
-(global as any).fileStore = globalStore;
-
 export const store = {
-    save(code: string, metadata: FileMetadata) {
-        globalStore.set(code.toUpperCase(), metadata);
-    },
+    async save(code: string, metadata: FileMetadata, fileBuffers?: Map<string, Buffer>) {
+        const pipeline = redis.pipeline();
 
-    get(code: string): FileMetadata | null {
-        return globalStore.get(code.toUpperCase()) || null;
-    },
+        // 1. Save Metadata
+        pipeline.set(`dropcode:${code}`, metadata, { ex: metadata.expiryMinutes * 60 });
 
-    remove(code: string) {
-        globalStore.delete(code.toUpperCase());
-    },
-
-    cleanup() {
-        const now = Date.now();
-        let count = 0;
-        for (const [code, metadata] of globalStore.entries()) {
-            if (now > metadata.expiresAt) {
-                // Remove files from disk
-                const files = metadata.files || [metadata];
-                files.forEach((file: any) => {
-                    try {
-                        if (file.path && fs.existsSync(file.path)) {
-                            fs.unlinkSync(file.path);
-                        }
-                    } catch (err) {
-                        console.error(`Failed to delete file ${file.path}:`, err);
-                    }
-                });
-                globalStore.delete(code);
-                count++;
+        // 2. Save File Content (if provided)
+        if (fileBuffers) {
+            for (const [key, buffer] of fileBuffers.entries()) {
+                // Store as base64 to ensure safe transport via JSON-based Redis REST
+                // Note: usage of base64 increases size by ~33%. 
+                // For production large files, Blob Storage is recommended.
+                pipeline.set(key, buffer.toString('base64'), { ex: metadata.expiryMinutes * 60 });
             }
         }
-        if (count > 0) console.log(`Cleanup: Removed ${count} expired files`);
+
+        await pipeline.exec();
+    },
+
+    async get(code: string): Promise<FileMetadata | null> {
+        return await redis.get(`dropcode:${code}`);
+    },
+
+    async getFile(key: string): Promise<Buffer | null> {
+        const base64 = await redis.get<string>(key);
+        if (!base64) return null;
+        return Buffer.from(base64, 'base64');
+    },
+
+    async remove(code: string) {
+        const metadata = await this.get(code);
+        if (metadata) {
+            const keysToDelete = [`dropcode:${code}`];
+            metadata.files.forEach(f => {
+                if (f.storageKey) keysToDelete.push(f.storageKey);
+            });
+            await redis.del(...keysToDelete);
+        }
+    },
+
+    async cleanup() {
+        // Redis handles expiry automatically via TTL (ex)
+        // No manual cleanup needed for Vercel
+        console.log('Cleanup: Handled by Redis TTL');
     }
 };

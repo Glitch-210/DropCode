@@ -2,11 +2,8 @@ import { NextResponse } from 'next/server';
 import { store } from '@/lib/storage';
 import { generateCode } from '@/lib/codes';
 import { LIMITS } from '@/lib/limits';
-import path from 'path';
-import fs from 'fs';
-import os from 'os';
 
-export const runtime = 'nodejs'; // Required for fs access
+export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
     try {
@@ -17,23 +14,20 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'No files uploaded' }, { status: 400 });
         }
 
-        // Generate unique code
+        // Generate Code
         let code = generateCode();
         let attempts = 0;
-        while (store.get(code) && attempts < 5) {
+        // Check collision (Async now)
+        while ((await store.get(code)) && attempts < 5) {
             code = generateCode();
             attempts++;
         }
-        if (store.get(code)) {
+        if (await store.get(code)) {
             return NextResponse.json({ error: 'Failed to generate unique code' }, { status: 503 });
         }
 
-        const UPLOAD_DIR = path.join(os.tmpdir(), 'uploads');
-        if (!fs.existsSync(UPLOAD_DIR)) {
-            fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-        }
-
         const filesMetadata = [];
+        const fileBuffers = new Map<string, Buffer>();
         let totalSize = 0;
 
         for (const file of files) {
@@ -42,17 +36,17 @@ export async function POST(req: Request) {
             }
 
             const buffer = Buffer.from(await file.arrayBuffer());
-            const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(7)}-${file.name}`;
-            const filePath = path.join(UPLOAD_DIR, uniqueName);
-
-            fs.writeFileSync(filePath, buffer);
+            const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+            const storageKey = `dropcode:file:${code}:${uniqueId}`;
 
             filesMetadata.push({
                 originalName: file.name,
                 mimeType: file.type,
                 size: file.size,
-                path: filePath
+                storageKey: storageKey
             });
+
+            fileBuffers.set(storageKey, buffer);
             totalSize += file.size;
         }
 
@@ -74,7 +68,8 @@ export async function POST(req: Request) {
             maxDownloads: Infinity
         };
 
-        store.save(code, metadata);
+        // Save everything to Redis
+        await store.save(code, metadata, fileBuffers);
 
         return NextResponse.json({
             code,

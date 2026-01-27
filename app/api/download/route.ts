@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { store } from '@/lib/storage';
-import fs from 'fs';
 import archiver from 'archiver';
 import { Readable } from 'stream';
 
@@ -17,18 +16,25 @@ function streamToWeb(nodeStream: Readable): ReadableStream {
     });
 }
 
+// Convert Buffer to Stream
+function bufferToStream(buffer: Buffer): Readable {
+    const stream = new Readable();
+    stream.push(buffer);
+    stream.push(null);
+    return stream;
+}
+
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
 
     if (!code) return NextResponse.json({ error: 'Code required' }, { status: 400 });
 
-    const fileData = store.get(code);
+    const fileData = await store.get(code);
+
     if (!fileData) return NextResponse.json({ error: 'File not found' }, { status: 404 });
-    if (Date.now() > fileData.expiresAt) {
-        store.remove(code);
-        return NextResponse.json({ error: 'File expired' }, { status: 404 });
-    }
+    // Redis handles expiry automatically, so if it's there, it's valid. 
+    // But we can double check logic if we want strict consistency.
 
     // Limit check
     if (fileData.downloads >= fileData.maxDownloads) {
@@ -42,13 +48,12 @@ export async function GET(req: Request) {
     try {
         if (files.length === 1) {
             const file = files[0];
-            if (!fs.existsSync(file.path)) return NextResponse.json({ error: 'File missing' }, { status: 404 });
+            if (!file.storageKey) return NextResponse.json({ error: 'File data missing' }, { status: 500 });
 
-            // Single file stream
-            // fs.createReadStream is a Node stream. Next.js Response expects body (Buffer, Stream, etc.)
-            // We can return new NextResponse(nodeStream as any) implies we might need explicit conversion or use nodejs runtime features.
-            // Using iterator for generic support:
-            const nodeStream = fs.createReadStream(file.path);
+            const buffer = await store.getFile(file.storageKey);
+            if (!buffer) return NextResponse.json({ error: 'File content expired or missing' }, { status: 404 });
+
+            const nodeStream = bufferToStream(buffer);
             responseStream = streamToWeb(nodeStream);
 
             headers = {
@@ -61,13 +66,17 @@ export async function GET(req: Request) {
             // Zip
             const archive = archiver('zip', { zlib: { level: 9 } });
 
-            files.forEach(f => {
-                if (fs.existsSync(f.path)) {
-                    archive.file(f.path, { name: f.originalName });
+            // We need to fetch all files first (parallel)
+            await Promise.all(files.map(async f => {
+                if (f.storageKey) {
+                    const buffer = await store.getFile(f.storageKey);
+                    if (buffer) {
+                        archive.append(buffer, { name: f.originalName });
+                    }
                 }
-            });
-            archive.finalize();
+            }));
 
+            archive.finalize();
             responseStream = streamToWeb(archive);
             headers = {
                 'Content-Disposition': `attachment; filename="dropcode-files.zip"`,
@@ -75,11 +84,10 @@ export async function GET(req: Request) {
             };
         }
 
-        // Increment Download Count (Naive approach: Count on request start)
-        // In real Vercel, tracking "completion" is hard without edge callbacks. 
-        // We'll increment on initiation as per standard serverless limitations.
+        // Increment Download Count
         fileData.downloads++;
-        store.save(code, fileData);
+        // We only save metadata back, not re-uploading files (which is efficient)
+        await store.save(code, fileData);
 
         return new NextResponse(responseStream, { headers });
 

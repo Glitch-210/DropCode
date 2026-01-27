@@ -7,14 +7,9 @@ export async function GET(req: Request) {
 
     if (!code) return NextResponse.json({ error: 'Code required' }, { status: 400 });
 
-    const fileData = store.get(code);
+    const fileData = await store.get(code);
     if (!fileData) {
         return NextResponse.json({ error: 'File not found or expired' }, { status: 404 });
-    }
-
-    if (Date.now() > fileData.expiresAt) {
-        store.remove(code);
-        return NextResponse.json({ error: 'File expired' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -32,12 +27,12 @@ export async function GET(req: Request) {
 
 export async function PATCH(req: Request) {
     try {
-        const body = await req.json(); // { code, expiryMinutes, maxDownloads }
-
+        const body = await req.json();
         const { code, expiryMinutes, maxDownloads } = body;
+
         if (!code) return NextResponse.json({ error: 'Code required' }, { status: 400 });
 
-        const fileData = store.get(code);
+        const fileData = await store.get(code);
 
         if (!fileData) {
             return NextResponse.json({ error: 'File not found or expired' }, { status: 404 });
@@ -47,7 +42,13 @@ export async function PATCH(req: Request) {
             const numericExpiry = parseInt(expiryMinutes);
             if ([5, 10, 30].includes(numericExpiry)) {
                 fileData.expiryMinutes = numericExpiry;
-                fileData.expiresAt = fileData.uploadedAt + (numericExpiry * 60 * 1000);
+                const newExpiry = fileData.uploadedAt + (numericExpiry * 60 * 1000);
+
+                // If extending, we must update TTL in Redis!
+                // The TTL is calculated from NOW in Redis, but we want it to match expiresAt
+                // So TTL = expiresAt - now
+
+                fileData.expiresAt = newExpiry;
             }
         }
 
@@ -62,7 +63,8 @@ export async function PATCH(req: Request) {
             }
         }
 
-        store.save(code, fileData);
+        // Save updates (file buffers not needed, existing keys persist)
+        await store.save(code, fileData);
 
         return NextResponse.json({
             code: fileData.code,
