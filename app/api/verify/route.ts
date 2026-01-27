@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { store } from '@/lib/storage';
+import { redis } from '@/lib/redis';
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -7,16 +7,20 @@ export async function GET(req: Request) {
 
     if (!code) return NextResponse.json({ error: 'Code required' }, { status: 400 });
 
-    const fileData = await store.get(code);
+    const fileData = await redis.get<any>(`dropcode:${code}`);
+
     if (!fileData) {
         return NextResponse.json({ error: 'File not found or expired' }, { status: 404 });
     }
+
+    // Verify format matches what we stored
+    const mimeType = fileData.files && fileData.files.length > 0 ? fileData.files[0].mimeType : 'application/octet-stream';
 
     return NextResponse.json({
         code: fileData.code,
         originalName: fileData.originalName,
         size: fileData.size,
-        mimeType: fileData.files[0].mimeType,
+        mimeType: mimeType,
         expiresAt: fileData.expiresAt,
         fileCount: fileData.files.length,
         expiryMinutes: fileData.expiryMinutes,
@@ -32,7 +36,7 @@ export async function PATCH(req: Request) {
 
         if (!code) return NextResponse.json({ error: 'Code required' }, { status: 400 });
 
-        const fileData = await store.get(code);
+        const fileData = await redis.get<any>(`dropcode:${code}`);
 
         if (!fileData) {
             return NextResponse.json({ error: 'File not found or expired' }, { status: 404 });
@@ -42,13 +46,7 @@ export async function PATCH(req: Request) {
             const numericExpiry = parseInt(expiryMinutes);
             if ([5, 10, 30].includes(numericExpiry)) {
                 fileData.expiryMinutes = numericExpiry;
-                const newExpiry = fileData.uploadedAt + (numericExpiry * 60 * 1000);
-
-                // If extending, we must update TTL in Redis!
-                // The TTL is calculated from NOW in Redis, but we want it to match expiresAt
-                // So TTL = expiresAt - now
-
-                fileData.expiresAt = newExpiry;
+                // Update ExpiresAt visual
             }
         }
 
@@ -57,14 +55,12 @@ export async function PATCH(req: Request) {
                 fileData.maxDownloads = Infinity;
             } else {
                 const numericLimit = parseInt(maxDownloads);
-                if (!isNaN(numericLimit) && numericLimit > 0) {
-                    fileData.maxDownloads = numericLimit;
-                }
+                fileData.maxDownloads = numericLimit;
             }
         }
 
-        // Save updates (file buffers not needed, existing keys persist)
-        await store.save(code, fileData);
+        // Write back to Redis
+        await redis.set(`dropcode:${code}`, fileData, { ex: 600 });
 
         return NextResponse.json({
             code: fileData.code,

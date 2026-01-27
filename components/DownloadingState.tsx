@@ -9,10 +9,27 @@ export default function DownloadingState() {
 
     useEffect(() => {
         if (code) {
-            const url = getDownloadUrl(code);
-            const timer = setTimeout(() => {
-                window.location.href = url;
-            }, 1000);
+            const fetchDownload = async () => {
+                try {
+                    const res = await fetch('/api/download', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code })
+                    });
+                    const data = await res.json();
+                    if (data.url) {
+                        window.location.href = data.url;
+                    } else {
+                        console.error('Download failed', data.error);
+                        // Optional: Navigate to error state
+                    }
+                } catch (e) {
+                    console.error('Download network error');
+                }
+            };
+
+            // Small delay for UI
+            const timer = setTimeout(fetchDownload, 1000);
             return () => clearTimeout(timer);
         }
     }, [code]);
