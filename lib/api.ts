@@ -1,3 +1,4 @@
+"use client";
 import { upload } from '@vercel/blob/client';
 
 const API_BASE = '/api';
@@ -43,7 +44,7 @@ export const uploadFile = async (files: File[] | FileList, onProgress?: (percent
         try {
             const blob = await upload(file.name, file, {
                 access: 'public',
-                handleUploadUrl: `${API_BASE}/blob-upload`,
+                handleUploadUrl: typeof window !== 'undefined' ? `${window.location.origin}/api/blob-upload` : '/api/blob-upload',
                 onUploadProgress: (progressEvent) => {
                     // Primitive total progress calculation
                     // This reports progress for CURRENT file.
