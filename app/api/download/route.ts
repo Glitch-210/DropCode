@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { redis } from '@/lib/redis';
+import { redis } from '@/lib/server/redis';
 
 export async function POST(req: Request) {
     // Used by Frontend to get the Blob URL for download
