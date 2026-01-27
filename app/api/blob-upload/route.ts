@@ -12,7 +12,8 @@ export async function POST(request: Request): Promise<NextResponse> {
             onBeforeGenerateToken: async (pathname) => {
                 // Authenticate user here if needed
                 return {
-                    allowedContentTypes: ['image/jpeg', 'image/png', 'image/gif', 'text/plain', 'application/pdf', 'application/zip', 'application/x-zip-compressed', 'application/octet-stream'],
+                    allowedContentTypes: ['*/*'],
+                    maximumSizeInBytes: 100 * 1024 * 1024, // 100MB
                     tokenPayload: JSON.stringify({
                         // optional payload
                     }),
