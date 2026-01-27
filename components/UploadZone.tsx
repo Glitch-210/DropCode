@@ -80,6 +80,10 @@ export default function UploadZone() {
             <p style={{ marginTop: 'var(--space-md)', color: '#666', pointerEvents: 'none' }}>
                 CLICK IF YOU MUST
             </p>
+            <div className="text-mono" style={{ marginTop: 'var(--space-lg)', fontSize: '0.8rem', opacity: 0.7, pointerEvents: 'none' }}>
+                <p>MAX 200MB • 10 MIN EXPIRY</p>
+                <p>NO ACCOUNTS • NO LOGS</p>
+            </div>
         </div>
     );
 }
