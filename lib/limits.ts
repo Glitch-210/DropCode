@@ -1,0 +1,6 @@
+export const LIMITS = {
+    MAX_FILE_SIZE: 200 * 1024 * 1024, // 200MB
+    DEFAULT_EXPIRY_MINUTES: 10,
+    EXPIRY_OPTIONS: [5, 10, 30],
+    DOWNLOAD_OPTIONS: [1, 3, Infinity]
+};
