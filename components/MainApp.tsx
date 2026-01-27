@@ -1,5 +1,4 @@
-"use client";
-
+import { useState, useEffect } from 'react';
 import { useApp } from '@/components/providers/AppProvider';
 import UploadZone from '@/components/UploadZone';
 import UploadingState from '@/components/UploadingState';
@@ -7,9 +6,15 @@ import CodeDisplay from '@/components/CodeDisplay';
 import DownloadInput from '@/components/DownloadInput';
 import DownloadingState from '@/components/DownloadingState';
 import ErrorDisplay from '@/components/ErrorDisplay';
+import ScreenLoader from '@/components/ScreenLoader';
 
 export default function MainApp() {
     const { state, setMode, reset } = useApp();
+    const [loading, setLoading] = useState(true);
+
+    if (loading) {
+        return <ScreenLoader onComplete={() => setLoading(false)} />;
+    }
 
     return (
         <div className="full-screen">
