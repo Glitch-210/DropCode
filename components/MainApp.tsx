@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect } from 'react';
 import { useApp } from '@/components/providers/AppProvider';
 import UploadZone from '@/components/UploadZone';
