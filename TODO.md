@@ -163,3 +163,96 @@
   - Test complete mobile → PC transfer flow
   - Verify file auto-deletes after 10 minutes
   - Expected output: MVP complete — upload, code, download, expiry all work
+
+
+Goal: Make DropCode reliable, fast, and correct at small scale (personal / MVP), with zero architectural debt.
+
+✅ Core Architecture (MUST)
+
+ Ensure direct uploads to Vercel Blob using @vercel/blob/client
+
+ Ensure no file data passes through API routes
+
+ Store only { code → blobUrl, filename, contentType } in Redis
+
+ Set Redis TTL to 10 minutes
+
+🔐 Server / Client Boundaries
+
+ Verify no client file imports:
+
+@vercel/blob
+
+@upstash/redis
+
+fs, path, crypto, undici
+
+ Add import "server-only" to all server-only files:
+
+app/api/**/route.ts
+
+lib/server/**
+
+ Ensure all interactive UI files start with "use client"
+
+⬆️ Upload Flow (Correctness)
+
+ <input type="file"> has no restrictive accept
+
+ Upload uses:
+
+@vercel/blob/client
+
+contentType: file.type || "application/octet-stream"
+
+ Handle upload errors gracefully (network / size)
+
+⬇️ Download Flow (Performance)
+
+ /api/download returns { url } only
+
+ Client redirects browser using:
+
+window.location.href = url
+
+ No fetch(blobUrl).blob() usage anywhere
+
+🧠 Redis Reliability
+
+ Redis client used only inside API routes
+
+ Codes are case-insensitive
+
+ Expired or invalid codes return clear error messages
+
+🧪 Guardrails & Debugging
+
+ Add /api/health endpoint to test Redis + Blob access
+
+ Log meaningful server errors (no silent failures)
+
+ Add client-side loading + timeout UI
+
+🚀 Deployment Safety
+
+ npm run build passes locally
+
+ Vercel build passes with no warnings ignored
+
+ Environment variables present:
+
+BLOB_READ_WRITE_TOKEN
+
+UPSTASH_REDIS_REST_URL
+
+UPSTASH_REDIS_REST_TOKEN
+
+📉 Explicit Non-Goals (For Now)
+
+❌ No auth
+
+❌ No large-scale optimization
+
+❌ No resumable uploads
+
+❌ No background jobs

@@ -1,3 +1,4 @@
+import "server-only";
 import { NextResponse } from 'next/server';
 import { redis } from '@/lib/server/redis';
 import { generateCode } from '@/lib/codes';
