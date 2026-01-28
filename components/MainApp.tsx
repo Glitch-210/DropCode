@@ -49,7 +49,7 @@ export default function MainApp() {
                 )}
                 {state.status === 'UPLOADING' && (
                     <ScreenLoader
-                        messages={[
+                        messages={state.message ? [state.message] : [
                             "SEALING FILE",
                             "BURNING LINK",
                             "SETTING EXPIRY",

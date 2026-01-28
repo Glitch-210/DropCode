@@ -13,6 +13,7 @@ export type AppState = {
         expiry: number | null;
         maxDownloads: number | null;
     };
+    message: string | null;
 };
 
 const initialState: AppState = {
@@ -25,6 +26,7 @@ const initialState: AppState = {
         expiry: null,
         maxDownloads: null,
     },
+    message: null,
 };
 
 const ACTIONS = {
@@ -39,7 +41,10 @@ const ACTIONS = {
     FETCH_FILE_ERROR: 'FETCH_FILE_ERROR',
     RESET: 'RESET',
     SET_CONFIG_EXPIRY: 'SET_CONFIG_EXPIRY',
+    RESET: 'RESET',
+    SET_CONFIG_EXPIRY: 'SET_CONFIG_EXPIRY',
     SET_CONFIG_DOWNLOADS: 'SET_CONFIG_DOWNLOADS',
+    SET_MESSAGE: 'SET_MESSAGE',
 } as const;
 
 type Action =
@@ -54,7 +59,9 @@ type Action =
     | { type: 'FETCH_FILE_ERROR'; payload: string }
     | { type: 'RESET' }
     | { type: 'SET_CONFIG_EXPIRY'; payload: number }
-    | { type: 'SET_CONFIG_DOWNLOADS'; payload: number };
+    | { type: 'SET_CONFIG_EXPIRY'; payload: number }
+    | { type: 'SET_CONFIG_DOWNLOADS'; payload: number }
+    | { type: 'SET_MESSAGE'; payload: string | null };
 
 function appReducer(state: AppState, action: Action): AppState {
     switch (action.type) {
@@ -95,6 +102,8 @@ function appReducer(state: AppState, action: Action): AppState {
             const isReady = newConfig.expiry !== null && newConfig.maxDownloads !== null;
             return { ...state, config: newConfig, status: isReady && state.status === 'IDLE' ? 'READY' : state.status };
         }
+        case 'SET_MESSAGE':
+            return { ...state, message: action.payload };
         default:
             return state;
     }
@@ -114,6 +123,7 @@ const AppContext = createContext<{
     reset: () => void;
     setExpiry: (minutes: number) => void;
     setDownloads: (count: number) => void;
+    setMessage: (message: string | null) => void;
 } | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -133,6 +143,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         reset: () => dispatch({ type: 'RESET' }),
         setExpiry: (minutes: number) => dispatch({ type: 'SET_CONFIG_EXPIRY', payload: minutes }),
         setDownloads: (count: number) => dispatch({ type: 'SET_CONFIG_DOWNLOADS', payload: count }),
+        setMessage: (message: string | null) => dispatch({ type: 'SET_MESSAGE', payload: message }),
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

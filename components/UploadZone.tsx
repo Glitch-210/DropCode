@@ -4,7 +4,7 @@ import { useApp } from '@/components/providers/AppProvider';
 import { uploadFile } from '@/lib/api';
 
 export default function UploadZone() {
-    const { state, startUpload, setProgress, uploadSuccess, uploadError } = useApp();
+    const { state, startUpload, setProgress, uploadSuccess, uploadError, setMessage } = useApp();
     const [isDragOver, setIsDragOver] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -44,6 +44,8 @@ export default function UploadZone() {
 
             const data = await uploadFile(fileList as File[], settings, (percent) => {
                 setProgress(percent);
+            }, (status) => {
+                setMessage(status);
             });
             // Small delay to ensure users see 100% completion
             setTimeout(() => {

@@ -1,5 +1,6 @@
 "use client";
 import { upload } from '@vercel/blob/client';
+import JSZip from 'jszip';
 
 const API_BASE = '/api';
 
@@ -27,51 +28,158 @@ const generateShareCode = () => {
     return result;
 };
 
-export const uploadFile = async (files: File[] | FileList, settings: { expiryMinutes: number, maxDownloads: number }, onProgress?: (percent: number) => void): Promise<any> => {
+// Helper to zip files (User provided logic)
+export async function zipFiles(
+    files: File[],
+    zipName = "files.zip",
+    onUpdate?: (metadata: { percent: number }) => void
+): Promise<File> {
+    const zip = new JSZip();
+
+    for (const file of files) {
+        // Preserve folder paths if present (webkitRelativePath)
+        const path = file.webkitRelativePath || file.name;
+        zip.file(path, file);
+    }
+
+    const blob = await zip.generateAsync({
+        type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: { level: 6 } // balanced, not too slow
+    }, (metadata) => {
+        if (onUpdate) {
+            onUpdate({ percent: metadata.percent });
+        }
+    });
+
+    return new File([blob], zipName, {
+        type: "application/zip"
+    });
+}
+
+export const uploadFile = async (
+    files: File[] | FileList,
+    settings: { expiryMinutes: number, maxDownloads: number },
+    onProgress?: (percent: number) => void,
+    onStatus?: (status: string) => void
+): Promise<any> => {
     const fileList = files instanceof FileList ? Array.from(files) : files;
     const shareCode = generateShareCode();
-    const uploadedBlobs: any[] = [];
+    let uploadedBlobs: any[] = [];
     let totalSize = 0;
 
-    // Calculate total size for progress tracking (simple version)
+    // Calculate total size for progress tracking
     fileList.forEach(f => totalSize += f.size);
-    let uploadedBytes = 0;
+    // let uploadedBytes = 0; // This is no longer used directly in the new logic
 
-    for (let i = 0; i < fileList.length; i++) {
-        const file = fileList[i];
-        const pathname = `uploads/${shareCode}/${file.name}`;
+    // Phase 1: Try Direct Uploads
+    // We will attempt to upload all files. If ANY fail, we switch to "Zip All" strategy.
+    let failed = false;
+    // We track per-file results to know if we need to rollback/discard
+    const successfulUploads: any[] = [];
 
-        try {
+    // Simple tracking for direct upload progress
+    const activeUploadsProgress = new Map<number, number>();
+    const updateProgress = () => {
+        if (onProgress) {
+            let loaded = 0;
+            activeUploadsProgress.forEach(v => loaded += v);
+            // If we are zipping, this logic might need check, but for direct uploads:
+            const percent = Math.min(100, Math.round((loaded / totalSize) * 100));
+            onProgress(percent);
+        }
+    };
+
+    try {
+        if (onStatus) onStatus("UPLOADING FILES...");
+
+        // Sequential upload for simplicity/safety with current error handling requirements
+        for (let i = 0; i < fileList.length; i++) {
+            const file = fileList[i];
+
+            // Test guard (can be removed later)
+            if (file.name === 'blocked.txt') {
+                // Simulate failure
+                throw new Error('Simulated Fail');
+            }
+
+            const pathname = `uploads/${shareCode}/${file.name}`;
+
+            // Upload
             const blob = await upload(pathname, file, {
                 access: 'public',
-                handleUploadUrl: '/api/blob/upload-token', // New endpoint
-                onUploadProgress: (progressEvent) => {
-                    if (onProgress) {
-                        // This event returns absolute bytes uploaded for THIS file
-                        // We need to track global progress?
-                        // For MVP, simplistic approximation:
-                        // Let's just pass the single file progress for now to keep UI lively
-                        // without complex state management.
-                        // Or better: (uploadedBytesBefore + current) / total
-                        const currentFilePercent = progressEvent.percentage;
-                        // const totalPercent = Math.round(((uploadedBytes + (file.size * (currentFilePercent / 100))) / totalSize) * 100);
-                        // onProgress(totalPercent);
-                        onProgress(currentFilePercent); // Simple per-file progress
-                    }
-                },
+                handleUploadUrl: '/api/blob/upload-token',
+                onUploadProgress: (evt) => {
+                    activeUploadsProgress.set(i, evt.loaded);
+                    updateProgress();
+                }
             });
 
-            uploadedBlobs.push({
+            successfulUploads.push({
                 url: blob.url,
                 originalName: file.name,
                 size: file.size,
                 mimeType: file.type,
                 pathname: blob.pathname
             });
-            uploadedBytes += file.size;
 
-        } catch (err) {
-            console.error(`Failed to upload ${file.name}`, err);
+            // Mark as done for progress (ensure 100% for this file)
+            activeUploadsProgress.set(i, file.size);
+            updateProgress();
+        }
+
+        // If we got here, all good!
+        uploadedBlobs = successfulUploads;
+
+    } catch (err) {
+        failed = true;
+        console.warn("Direct upload failed, switching to ZIP Fallback", err);
+    }
+
+    // Phase 2: ZIP Fallback (if failed)
+    if (failed) {
+        try {
+            if (onStatus) onStatus("BUNDLING FILES...");
+
+            // Zip ALL files (discard successfulUploads)
+            const zipName = fileList.length === 1 ? `${fileList[0].name}.zip` : `archive-${shareCode}.zip`;
+
+            const zipFile = await zipFiles(fileList, zipName, (meta) => {
+                // Map zip progress (0-100) to our progress UI
+                // Maybe scale it? 0-50% for zip, 50-100% for upload?
+                // Or just show zip progress.
+                if (onProgress) onProgress(meta.percent);
+            });
+
+            if (onStatus) onStatus("UPLOADING BUNDLE...");
+
+            const zipPathname = `uploads/${shareCode}/${zipName}`;
+
+            const blob = await upload(zipPathname, zipFile, {
+                access: 'public',
+                handleUploadUrl: '/api/blob/upload-token',
+                onUploadProgress: (evt) => {
+                    if (onProgress) {
+                        const percent = Math.round((evt.loaded / zipFile.size) * 100);
+                        onProgress(percent);
+                    }
+                }
+            });
+
+            uploadedBlobs = [{
+                url: blob.url,
+                originalName: zipName,
+                size: zipFile.size,
+                mimeType: 'application/zip',
+                pathname: blob.pathname
+            }];
+            // Total size is now zip size effectively, but for display we might want sum of files?
+            // Metadata usually expects sum of files we shared.
+            // But technically we are sharing the zip now.
+            totalSize = zipFile.size;
+
+        } catch (zipErr) {
+            console.error("ZIP Fallback failed", zipErr);
             throw { error: 'Upload Failed' };
         }
     }
