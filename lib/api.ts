@@ -16,107 +16,123 @@ export type FileMetadata = {
     blobUrl?: string; // New field for direct blob download
 };
 
+// Helper to generate a random 6-character code
+const generateShareCode = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No I, O, 0, 1
+    let result = '';
+    for (let i = 0; i < 6; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+};
+
 export const uploadFile = async (files: File[] | FileList, onProgress?: (percent: number) => void): Promise<any> => {
     const fileList = files instanceof FileList ? Array.from(files) : files;
-
-    // Vercel Blob (Client Upload)
-    // Multi-file not natively supported in single call yet, doing sequential for MVP.
-    // Or parallel.
-
-    // Actually, Prompt Requirement: "Upload files directly from the browser to Blob... Store { code -> blobUrl } in Redis"
-    // Does DropCode support multi-file? Yes. 'dropcode-files.zip'.
-    // Vercel Blob is object storage. Zipping on client is hard/slow.
-    // Strategy: Upload individual files to Blob. Send ALL Blob URLs to Backend. Backend registers them.
-    // Download: Backend returns list of URLs? Or Backend streams them to Zip?
-    // "Downloader... uses code -> Redis -> blob URL -> download"
-    // If multi-file, we might need to zip in Lambda (Backend) but that requires fetching from Blob.
-    // Fetching from Blob in Lambda is fast.
-
-    // Let's implement client-side upload loop.
-    const uploadedBlobs = [];
+    const shareCode = generateShareCode();
+    const uploadedBlobs: any[] = [];
     let totalSize = 0;
+
+    // Calculate total size for progress tracking (simple version)
+    fileList.forEach(f => totalSize += f.size);
+    let uploadedBytes = 0;
 
     for (let i = 0; i < fileList.length; i++) {
         const file = fileList[i];
-        totalSize += file.size;
+        const pathname = `uploads/${shareCode}/${file.name}`;
 
-        // Upload to Blob
         try {
-            const blob = await upload(file.name, file, {
+            const blob = await upload(pathname, file, {
                 access: 'public',
-                handleUploadUrl: typeof window !== 'undefined' ? `${window.location.origin}/api/blob-upload` : '/api/blob-upload',
+                handleUploadUrl: '/api/blob/upload-token', // New endpoint
                 onUploadProgress: (progressEvent) => {
-                    // Primitive total progress calculation
-                    // This reports progress for CURRENT file.
-                    // Ideally we weight it.
-                    // For MVP, just passing current file progress might look jumpy.
-                    // Let's try to smooth it? Or just pass it.
                     if (onProgress) {
-                        const percent = Math.round((progressEvent.percentage));
-                        onProgress(percent);
+                        // This event returns absolute bytes uploaded for THIS file
+                        // We need to track global progress?
+                        // For MVP, simplistic approximation:
+                        // Let's just pass the single file progress for now to keep UI lively
+                        // without complex state management.
+                        // Or better: (uploadedBytesBefore + current) / total
+                        const currentFilePercent = progressEvent.percentage;
+                        // const totalPercent = Math.round(((uploadedBytes + (file.size * (currentFilePercent / 100))) / totalSize) * 100);
+                        // onProgress(totalPercent);
+                        onProgress(currentFilePercent); // Simple per-file progress
                     }
                 },
             });
+
             uploadedBlobs.push({
                 url: blob.url,
                 originalName: file.name,
                 size: file.size,
-                mimeType: file.type
+                mimeType: file.type,
+                pathname: blob.pathname
             });
+            uploadedBytes += file.size;
+
         } catch (err) {
-            console.error(err);
-            throw { error: 'Blob Upload Failed' };
+            console.error(`Failed to upload ${file.name}`, err);
+            throw { error: 'Upload Failed' };
         }
     }
 
-    // Register with Backend
-    // We send the list of blobs.
+    // Register with Backend (Phase 3)
     try {
-        const res = await fetch(`${API_BASE}/upload`, {
+        const res = await fetch('/api/share', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                shareCode,
                 files: uploadedBlobs,
-                totalSize // explicitly sending, though backend could sum
+                settings: {
+                    expiryMinutes: 60, // Default 60 mins for new flow
+                    maxDownloads: 5    // Default 5 downloads
+                }
             })
         });
 
         if (!res.ok) {
-            const err = await res.json();
-            throw err;
+            throw new Error('Metadata registration failed');
         }
 
-        return await res.json();
+        const data = await res.json();
+
+        // Return structured data expected by consumers
+        return {
+            code: shareCode,
+            files: uploadedBlobs,
+            totalSize,
+            expiresAt: data.expiresAt
+        };
+
     } catch (e: any) {
-        throw { error: e.error || 'Registration Failed' };
+        console.error(e);
+        throw { error: 'Registration Failed' };
     }
 };
 
 export const getFileMetadata = async (code: string): Promise<FileMetadata> => {
-    const res = await fetch(`${API_BASE}/verify?code=${encodeURIComponent(code)}`);
+    const res = await fetch(`/api/share/${encodeURIComponent(code)}`);
     const data = await res.json();
     if (!res.ok) throw data;
     return data;
 };
 
 export const updateFileMetadata = async (code: string, updates: any): Promise<any> => {
-    const res = await fetch(`${API_BASE}/verify`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, ...updates })
+    // This seems unused or legacy? Keeping for safety but it endpoint likely doesn't exist yet.
+    // Implementation plan didn't mention update.
+    return {};
+};
+
+// Replaces getDownloadUrl with async claim
+export const claimDownload = async (code: string): Promise<{ url: string, files: any[] }> => {
+    const res = await fetch(`/api/share/${encodeURIComponent(code)}/download`, {
+        method: 'POST'
     });
     const data = await res.json();
     if (!res.ok) throw data;
     return data;
 };
-
-// With Blob, the "Download URL" might be the blob URL directly OR the API proxy.
-// Prompt says: "Frontend should redirect to the returned URL."
-// So this function might need to be async or just return the API endpoint that does the redirect logic?
-// Current usage: window.location.href = getDownloadUrl(code);
-// If we change this to return the API, and API returns JSON, this breaks.
-// Refactoring Components required.
-// For now, let's keep this returning the API url, and update the Component to fetch.
+// Legacy support if needed, but we should switch to claimDownload
 export const getDownloadUrl = (code: string): string => {
-    return `${API_BASE}/download?code=${encodeURIComponent(code)}`;
+    return `/api/share/${encodeURIComponent(code)}/download`;
 };

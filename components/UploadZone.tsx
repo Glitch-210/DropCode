@@ -77,10 +77,10 @@ export default function UploadZone() {
             <p className="font-bold uppercase" style={{ fontSize: '1.5rem', pointerEvents: 'none' }}>
                 {isDragOver ? "Drop It!" : "Drop File Here"}
             </p>
-            <p style={{ marginTop: 'var(--space-md)', color: '#666', pointerEvents: 'none' }}>
+            <p style={{ marginTop: 'var(--space-md)', color: 'black', pointerEvents: 'none', fontWeight: 'bold' }}>
                 CLICK IF YOU MUST
             </p>
-            <div className="text-mono" style={{ marginTop: 'var(--space-lg)', fontSize: '0.8rem', opacity: 0.7, pointerEvents: 'none' }}>
+            <div className="text-mono" style={{ marginTop: 'var(--space-lg)', fontSize: '0.8rem', color: 'black', pointerEvents: 'none' }}>
                 <p>MAX 200MB • 10 MIN EXPIRY</p>
                 <p>NO ACCOUNTS • NO LOGS</p>
             </div>

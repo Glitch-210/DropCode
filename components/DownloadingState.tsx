@@ -11,14 +11,21 @@ export default function DownloadingState() {
         if (code) {
             const fetchDownload = async () => {
                 try {
-                    const res = await fetch('/api/download', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ code })
+                    // Use the new claim function
+                    // We need to import it properly. Assuming claimDownload is exported.
+                    // But I need to update the import statement too.
+                    // Since replace_file_content target is the hook, I can't easily change imports up top without multi-replace.
+                    // I will do multi-replace or just fetch directly here using the new path.
+                    // Let's use fetch directly matching the API I just built to be safe and avoid import errors in this tool call.
+
+                    const res = await fetch(`/api/share/${code}/download`, {
+                        method: 'POST'
                     });
                     const data = await res.json();
+
                     if (data.url) {
                         window.location.href = data.url;
+                        // Handle multi-file if needed later
                     } else {
                         console.error('Download failed', data.error);
                         // Optional: Navigate to error state

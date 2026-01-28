@@ -22,7 +22,6 @@ export default function MainApp() {
             <div style={{ position: 'absolute', top: '2rem', right: '2rem' }}>
                 <button
                     className="brutal-button"
-                    style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}
                     onClick={() => setMode(state.mode === 'UPLOAD' ? 'DOWNLOAD' : 'UPLOAD')}
                 >
                     {state.mode === 'UPLOAD' ? 'SWITCH TO DOWNLOAD' : 'SWITCH TO UPLOAD'}
