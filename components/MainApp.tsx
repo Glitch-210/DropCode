@@ -47,7 +47,17 @@ export default function MainApp() {
                         <UploadZone />
                     </>
                 )}
-                {state.status === 'UPLOADING' && <UploadingState />}
+                {state.status === 'UPLOADING' && (
+                    <ScreenLoader
+                        messages={[
+                            "SEALING FILE",
+                            "BURNING LINK",
+                            "SETTING EXPIRY",
+                            "DO NOT REFRESH",
+                            "(YOU WILL ANYWAY)"
+                        ]}
+                    />
+                )}
                 {state.status === 'GENERATED' && <CodeDisplay />}
 
                 {state.status === 'DOWNLOAD_ENTRY' && <DownloadInput />}

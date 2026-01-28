@@ -315,9 +315,9 @@ h6 {
 }
 
 .animate-compress {
-  animation: compress 3s cubic-bezier(0.8, 0, 0.2, 1) infinite;
+  animation: compress 1.5s cubic-bezier(0.8, 0, 0.2, 1) infinite;
 }
 
 .animate-lock {
-  animation: lock-snap 3s cubic-bezier(0.8, 0, 0.2, 1) infinite;
+  animation: lock-snap 1.5s cubic-bezier(0.8, 0, 0.2, 1) infinite;
 }

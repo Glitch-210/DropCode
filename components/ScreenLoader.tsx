@@ -1,25 +1,34 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 
-export default function ScreenLoader({ onComplete }: { onComplete?: () => void }) {
+export default function ScreenLoader({ onComplete, messages }: { onComplete?: () => void, messages?: string[] }) {
     const [msgIndex, setMsgIndex] = useState(0);
-    const messages = [
-        "SEALING FILE",
-        "BURNING LINK",
-        "SETTING EXPIRY",
-        "DO NOT REFRESH",
-        "(YOU WILL ANYWAY)"
+    const defaultMessages = [
+        "INITIALIZING",
+        "LOADING ASSETS",
+        "PREPARING DROP",
     ];
+    const msgs = messages || defaultMessages;
 
     useEffect(() => {
-        // Since the prompt asks for a "loop", but we technically wait for onComplete from the parent (Upload/Download)
-        // We will just let it loop indefinitely until unmounted.
         const interval = setInterval(() => {
-            setMsgIndex((current) => (current + 1) % messages.length);
-        }, 3000); // Change text every 3s (matches animation loop roughly)
+            setMsgIndex((current) => (current + 1) % msgs.length);
+        }, 1500);
 
-        return () => clearInterval(interval);
-    }, []);
+        // If onComplete is provided, trigger it after a set time (e.g. 2s)
+        // so it doesn't loop forever as a splash screen.
+        let timeout: NodeJS.Timeout;
+        if (onComplete) {
+            timeout = setTimeout(() => {
+                onComplete();
+            }, 2000);
+        }
+
+        return () => {
+            clearInterval(interval);
+            if (timeout) clearTimeout(timeout);
+        };
+    }, [onComplete, msgs.length]);
 
     return (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-[var(--color-bg-body)]">
@@ -42,7 +51,7 @@ export default function ScreenLoader({ onComplete }: { onComplete?: () => void }
             {/* Microcopy */}
             <div className="mt-12 h-8 flex items-center justify-center">
                 <p className="font-bold font-mono text-xl tracking-widest uppercase">
-                    {messages[msgIndex]}
+                    {msgs[msgIndex]}
                 </p>
             </div>
 
