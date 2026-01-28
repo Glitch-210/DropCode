@@ -1,4 +1,6 @@
 {
   "/api/blob/upload-token/route": "app/api/blob/upload-token/route.js",
-  "/api/share/route": "app/api/share/route.js"
+  "/api/share/route": "app/api/share/route.js",
+  "/api/share/[code]/route": "app/api/share/[code]/route.js",
+  "/api/share/[code]/download/route": "app/api/share/[code]/download/route.js"
 }
