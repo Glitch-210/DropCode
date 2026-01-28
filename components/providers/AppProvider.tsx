@@ -41,8 +41,6 @@ const ACTIONS = {
     FETCH_FILE_ERROR: 'FETCH_FILE_ERROR',
     RESET: 'RESET',
     SET_CONFIG_EXPIRY: 'SET_CONFIG_EXPIRY',
-    RESET: 'RESET',
-    SET_CONFIG_EXPIRY: 'SET_CONFIG_EXPIRY',
     SET_CONFIG_DOWNLOADS: 'SET_CONFIG_DOWNLOADS',
     SET_MESSAGE: 'SET_MESSAGE',
 } as const;
@@ -58,7 +56,6 @@ type Action =
     | { type: 'FETCH_FILE_SUCCESS'; payload: any }
     | { type: 'FETCH_FILE_ERROR'; payload: string }
     | { type: 'RESET' }
-    | { type: 'SET_CONFIG_EXPIRY'; payload: number }
     | { type: 'SET_CONFIG_EXPIRY'; payload: number }
     | { type: 'SET_CONFIG_DOWNLOADS'; payload: number }
     | { type: 'SET_MESSAGE'; payload: string | null };
