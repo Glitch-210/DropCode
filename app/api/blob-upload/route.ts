@@ -12,15 +12,6 @@ export async function POST(req: Request) {
 
             onBeforeGenerateToken: async () => {
                 return {
-                    // ✅ allow all file types (safe for now)
-                    allowedContentTypes: [
-                        "image/*",
-                        "application/pdf",
-                        "application/zip",
-                        "text/plain",
-                        "application/octet-stream",
-                    ],
-
                     // ✅ keep reasonable limit for Vercel
                     maximumSizeInBytes: 100 * 1024 * 1024, // 100MB
                 };

@@ -88,6 +88,7 @@ export default function UploadZone() {
             <input
                 type="file"
                 multiple
+                accept="*/*"
                 style={{ display: 'none' }}
                 ref={fileInputRef}
                 onChange={(e) => handleFile(e.target.files)}
