@@ -13,6 +13,7 @@ export type FileMetadata = {
     expiryMinutes: number;
     maxDownloads: string | number;
     downloads: number;
+    downloadsLeft?: number;
     blobUrl?: string; // New field for direct blob download
 };
 
@@ -26,7 +27,7 @@ const generateShareCode = () => {
     return result;
 };
 
-export const uploadFile = async (files: File[] | FileList, onProgress?: (percent: number) => void): Promise<any> => {
+export const uploadFile = async (files: File[] | FileList, settings: { expiryMinutes: number, maxDownloads: number }, onProgress?: (percent: number) => void): Promise<any> => {
     const fileList = files instanceof FileList ? Array.from(files) : files;
     const shareCode = generateShareCode();
     const uploadedBlobs: any[] = [];
@@ -83,10 +84,7 @@ export const uploadFile = async (files: File[] | FileList, onProgress?: (percent
             body: JSON.stringify({
                 shareCode,
                 files: uploadedBlobs,
-                settings: {
-                    expiryMinutes: 60, // Default 60 mins for new flow
-                    maxDownloads: 5    // Default 5 downloads
-                }
+                settings: settings
             })
         });
 
@@ -101,7 +99,8 @@ export const uploadFile = async (files: File[] | FileList, onProgress?: (percent
             code: shareCode,
             files: uploadedBlobs,
             totalSize,
-            expiresAt: data.expiresAt
+            expiresAt: data.expiresAt,
+            downloadsLeft: settings.maxDownloads
         };
 
     } catch (e: any) {

@@ -8,18 +8,26 @@
 
 :root {
   /* Primary Colors - Bold, loud, confident */
-  --color-bg-body: #FFDE00; /* Bold Yellow */
-  --color-bg-card: #FFFFFF; /* White */
-  
+  --color-bg-body: #FFDE00;
+  /* Bold Yellow */
+  --color-bg-card: #FFFFFF;
+  /* White */
+
   /* Text & Border Colors */
-  --color-text-primary: #000000; /* Pure Black */
-  --color-text-inverse: #FFFFFF; /* White text for buttons */
-  --color-border: #000000; /* Pure Black */
+  --color-text-primary: #000000;
+  /* Pure Black */
+  --color-text-inverse: #FFFFFF;
+  /* White text for buttons */
+  --color-border: #000000;
+  /* Pure Black */
 
   /* Accent Colors */
-  --color-accent-blue: #000000; /* Keeping it mono mostly */
-  --color-accent-red: #FF0000; /* Pure Red */
-  --color-accent-green: #00FF00; /* Lime Green */
+  --color-accent-blue: #000000;
+  /* Keeping it mono mostly */
+  --color-accent-red: #FF0000;
+  /* Pure Red */
+  --color-accent-green: #00FF00;
+  /* Lime Green */
 
   /* Border Widths */
   --border-thin: 2px;
@@ -39,11 +47,14 @@
 }
 
 /* Base Reset */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -59,7 +70,12 @@ body {
 }
 
 /* Typography */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: 900;
   line-height: 1.1;
   letter-spacing: -0.03em;
@@ -91,13 +107,14 @@ h1, h2, h3, h4, h5, h6 {
   border: none;
   cursor: pointer;
   transition: all 0.1s ease;
-  border: var(--border-thick) solid transparent; /* Keeps sizing consistent */
+  border: var(--border-thick) solid transparent;
+  /* Keeps sizing consistent */
 }
 
 .brutal-button:hover {
   background-color: #333333;
   transform: translateY(-2px);
-  box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
 }
 
 .brutal-button:active {
@@ -196,10 +213,21 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Utilities */
-.text-center { text-align: center; }
-.text-mono { font-family: var(--font-mono); }
-.font-bold { font-weight: 800; }
-.uppercase { text-transform: uppercase; }
+.text-center {
+  text-align: center;
+}
+
+.text-mono {
+  font-family: var(--font-mono);
+}
+
+.font-bold {
+  font-weight: 800;
+}
+
+.uppercase {
+  text-transform: uppercase;
+}
 
 /* Layout */
 .full-screen {
@@ -217,8 +245,79 @@ h1, h2, h3, h4, h5, h6 {
     --space-lg: 1.5rem;
     --space-xl: 2rem;
   }
+
   .brutal-container {
     padding: var(--space-md);
     box-shadow: 4px 4px 0 var(--color-border);
   }
+}
+
+/* LOADER ANIMATIONS */
+@keyframes compress {
+  0% {
+    transform: scaleY(1);
+    border-width: 4px;
+  }
+
+  35% {
+    transform: scaleY(0.1);
+    border-width: 12px;
+    border-color: black;
+  }
+
+  45% {
+    transform: scaleY(0.1);
+    border-width: 12px;
+    border-color: black;
+  }
+
+  60% {
+    transform: scaleY(1);
+    border-width: 4px;
+  }
+
+  100% {
+    transform: scaleY(1);
+    border-width: 4px;
+  }
+}
+
+@keyframes lock-snap {
+
+  0%,
+  30% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  35% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+
+  40% {
+    transform: scale(1);
+  }
+
+  55% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  60% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-compress {
+  animation: compress 3s cubic-bezier(0.8, 0, 0.2, 1) infinite;
+}
+
+.animate-lock {
+  animation: lock-snap 3s cubic-bezier(0.8, 0, 0.2, 1) infinite;
 }

@@ -8,6 +8,7 @@ import DownloadInput from '@/components/DownloadInput';
 import DownloadingState from '@/components/DownloadingState';
 import ErrorDisplay from '@/components/ErrorDisplay';
 import ScreenLoader from '@/components/ScreenLoader';
+import ConfigSelector from '@/components/ConfigSelector';
 
 export default function MainApp() {
     const { state, setMode, reset } = useApp();
@@ -40,7 +41,12 @@ export default function MainApp() {
                     DropCode
                 </h1>
 
-                {state.status === 'IDLE' && <UploadZone />}
+                {(state.status === 'IDLE' || state.status === 'READY') && (
+                    <>
+                        <ConfigSelector />
+                        <UploadZone />
+                    </>
+                )}
                 {state.status === 'UPLOADING' && <UploadingState />}
                 {state.status === 'GENERATED' && <CodeDisplay />}
 

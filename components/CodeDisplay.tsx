@@ -70,58 +70,19 @@ export default function CodeDisplay() {
                 </button>
             </div>
 
-            {/* Config Controls */}
-            <div style={{ marginTop: 'var(--space-xl)', display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)', alignItems: 'center' }}>
-
-                {/* Expiry Control */}
-                <div>
-                    <p className="font-bold uppercase" style={{ fontSize: '0.9rem', marginBottom: 'var(--space-sm)' }}>EXPIRES IN</p>
-                    <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-                        {[5, 10, 30].map(mins => (
-                            <button
-                                key={mins}
-                                onClick={() => handleUpdate({ expiryMinutes: mins })}
-                                style={{
-                                    padding: 'var(--space-xs) var(--space-md)',
-                                    border: '2px solid black',
-                                    fontWeight: 'bold',
-                                    backgroundColor: selectedExpiry === mins ? 'var(--color-bg-accent)' : 'transparent',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                {mins}M
-                            </button>
-                        ))}
-                    </div>
+            {/* Success Stats */}
+            <div className="brutal-container" style={{ marginTop: 'var(--space-xl)', width: '100%', textAlign: 'left' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-md)' }}>
+                    <span className="font-bold">EXPIRES IN:</span>
+                    <span className="text-mono" style={{ color: 'var(--color-accent-red)' }}>{timeLeft}</span>
                 </div>
-
-                {/* Download Limit Control */}
-                <div>
-                    <p className="font-bold uppercase" style={{ fontSize: '0.9rem', marginBottom: 'var(--space-sm)' }}>MAX DOWNLOADS</p>
-                    <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-                        {[1, 3, 'Unlimited'].map(limit => (
-                            <button
-                                key={limit}
-                                onClick={() => handleUpdate({ maxDownloads: limit === 'Unlimited' ? 'Infinity' : limit })}
-                                style={{
-                                    padding: 'var(--space-xs) var(--space-md)',
-                                    border: '2px solid black',
-                                    fontWeight: 'bold',
-                                    backgroundColor: selectedLimit === limit ? 'var(--color-bg-accent)' : 'transparent',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                {limit === 'Unlimited' ? '∞' : limit}
-                            </button>
-                        ))}
-                    </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span className="font-bold">DOWNLOADS LEFT:</span>
+                    <span className="text-mono">{maxDownloads === Infinity ? '∞' : (state.data?.downloadsLeft ?? maxDownloads)}</span>
                 </div>
-
             </div>
 
-            <p className="font-bold" style={{ marginTop: 'var(--space-xl)', fontSize: '1.2rem' }}>
-                EXPIRES IN: <span style={{ color: 'var(--color-accent-red)' }}>{timeLeft}</span>
-            </p>
+
 
             <p
                 style={{ marginTop: 'var(--space-lg)', textDecoration: 'underline', cursor: 'pointer', opacity: 0.7 }}

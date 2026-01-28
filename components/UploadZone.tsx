@@ -4,12 +4,20 @@ import { useApp } from '@/components/providers/AppProvider';
 import { uploadFile } from '@/lib/api';
 
 export default function UploadZone() {
-    const { startUpload, setProgress, uploadSuccess, uploadError } = useApp();
+    const { state, startUpload, setProgress, uploadSuccess, uploadError } = useApp();
     const [isDragOver, setIsDragOver] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const isReady = state.status === 'READY';
+
     const handleFile = async (files: FileList | File[] | null) => {
         if (!files || files.length === 0) return;
+
+        // Guardrail: Must be READY
+        if (!isReady) {
+            alert('Please select Expiry and Download Limit first.');
+            return;
+        }
 
         // Calculate total size
         let totalSize = 0;
@@ -28,7 +36,13 @@ export default function UploadZone() {
 
         startUpload();
         try {
-            const data = await uploadFile(fileList as File[], (percent) => {
+            // Pass the config from state
+            const settings = {
+                expiryMinutes: state.config.expiry!,
+                maxDownloads: state.config.maxDownloads!
+            };
+
+            const data = await uploadFile(fileList as File[], settings, (percent) => {
                 setProgress(percent);
             });
             // Small delay to ensure users see 100% completion
@@ -61,10 +75,15 @@ export default function UploadZone() {
     return (
         <div
             className={`brutal-upload-zone ${isDragOver ? 'dragover' : ''}`}
+            style={{
+                opacity: isReady ? 1 : 0.5,
+                cursor: isReady ? 'pointer' : 'not-allowed',
+                position: 'relative'
+            }}
             onDrop={onDrop}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => isReady && fileInputRef.current?.click()}
         >
             <input
                 type="file"
@@ -73,17 +92,32 @@ export default function UploadZone() {
                 ref={fileInputRef}
                 onChange={(e) => handleFile(e.target.files)}
                 aria-label="Upload File"
+                disabled={!isReady}
             />
-            <p className="font-bold uppercase" style={{ fontSize: '1.5rem', pointerEvents: 'none' }}>
-                {isDragOver ? "Drop It!" : "Drop File Here"}
-            </p>
-            <p style={{ marginTop: 'var(--space-md)', color: 'black', pointerEvents: 'none', fontWeight: 'bold' }}>
-                CLICK IF YOU MUST
-            </p>
-            <div className="text-mono" style={{ marginTop: 'var(--space-lg)', fontSize: '0.8rem', color: 'black', pointerEvents: 'none' }}>
-                <p>MAX 200MB • 10 MIN EXPIRY</p>
-                <p>NO ACCOUNTS • NO LOGS</p>
-            </div>
+
+            {!isReady ? (
+                <div className="text-center">
+                    <p className="font-bold uppercase" style={{ fontSize: '1.2rem', color: 'black' }}>
+                        CONFIGURATION REQUIRED
+                    </p>
+                    <p className="text-mono" style={{ fontSize: '0.9rem', marginTop: 'var(--space-sm)' }}>
+                        SELECT EXPIRY & LIMIT ABOVE
+                    </p>
+                </div>
+            ) : (
+                <>
+                    <p className="font-bold uppercase" style={{ fontSize: '1.5rem', pointerEvents: 'none' }}>
+                        {isDragOver ? "Drop It!" : "Drop File Here"}
+                    </p>
+                    <p style={{ marginTop: 'var(--space-md)', color: 'black', pointerEvents: 'none', fontWeight: 'bold' }}>
+                        CLICK IF YOU MUST
+                    </p>
+                    <div className="text-mono" style={{ marginTop: 'var(--space-lg)', fontSize: '0.8rem', color: 'black', pointerEvents: 'none' }}>
+                        <p>MAX 200MB • ENCRYPTED</p>
+                        <p>NO ACCOUNTS • NO LOGS</p>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

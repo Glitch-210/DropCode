@@ -4,11 +4,15 @@ import { createContext, useContext, useReducer, ReactNode } from 'react';
 import { FileMetadata } from '@/lib/api';
 
 export type AppState = {
-    status: 'IDLE' | 'UPLOADING' | 'GENERATED' | 'DOWNLOAD_ENTRY' | 'DOWNLOADING' | 'ERROR';
+    status: 'IDLE' | 'READY' | 'UPLOADING' | 'GENERATED' | 'DOWNLOAD_ENTRY' | 'DOWNLOADING' | 'ERROR';
     data: FileMetadata | null;
     error: string | null;
     progress: number;
     mode: 'UPLOAD' | 'DOWNLOAD';
+    config: {
+        expiry: number | null;
+        maxDownloads: number | null;
+    };
 };
 
 const initialState: AppState = {
@@ -17,6 +21,10 @@ const initialState: AppState = {
     error: null,
     progress: 0,
     mode: 'UPLOAD',
+    config: {
+        expiry: null,
+        maxDownloads: null,
+    },
 };
 
 const ACTIONS = {
@@ -30,6 +38,8 @@ const ACTIONS = {
     FETCH_FILE_SUCCESS: 'FETCH_FILE_SUCCESS',
     FETCH_FILE_ERROR: 'FETCH_FILE_ERROR',
     RESET: 'RESET',
+    SET_CONFIG_EXPIRY: 'SET_CONFIG_EXPIRY',
+    SET_CONFIG_DOWNLOADS: 'SET_CONFIG_DOWNLOADS',
 } as const;
 
 type Action =
@@ -42,7 +52,9 @@ type Action =
     | { type: 'FETCH_FILE_START' }
     | { type: 'FETCH_FILE_SUCCESS'; payload: any }
     | { type: 'FETCH_FILE_ERROR'; payload: string }
-    | { type: 'RESET' };
+    | { type: 'RESET' }
+    | { type: 'SET_CONFIG_EXPIRY'; payload: number }
+    | { type: 'SET_CONFIG_DOWNLOADS'; payload: number };
 
 function appReducer(state: AppState, action: Action): AppState {
     switch (action.type) {
@@ -70,7 +82,19 @@ function appReducer(state: AppState, action: Action): AppState {
         case 'FETCH_FILE_ERROR':
             return { ...state, status: 'ERROR', error: action.payload };
         case 'RESET':
+            // Keep the config on reset for better UX? Or clear it? 
+            // Prompt says: "Reset: UI state, Config selections". So clear it.
             return { ...initialState, mode: state.mode };
+        case 'SET_CONFIG_EXPIRY': {
+            const newConfig = { ...state.config, expiry: action.payload };
+            const isReady = newConfig.expiry !== null && newConfig.maxDownloads !== null;
+            return { ...state, config: newConfig, status: isReady && state.status === 'IDLE' ? 'READY' : state.status };
+        }
+        case 'SET_CONFIG_DOWNLOADS': {
+            const newConfig = { ...state.config, maxDownloads: action.payload };
+            const isReady = newConfig.expiry !== null && newConfig.maxDownloads !== null;
+            return { ...state, config: newConfig, status: isReady && state.status === 'IDLE' ? 'READY' : state.status };
+        }
         default:
             return state;
     }
@@ -88,6 +112,8 @@ const AppContext = createContext<{
     fetchFileSuccess: (data: any) => void;
     fetchFileError: (error: string) => void;
     reset: () => void;
+    setExpiry: (minutes: number) => void;
+    setDownloads: (count: number) => void;
 } | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -105,6 +131,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         fetchFileSuccess: (data: any) => dispatch({ type: 'FETCH_FILE_SUCCESS', payload: data }),
         fetchFileError: (error: string) => dispatch({ type: 'FETCH_FILE_ERROR', payload: error }),
         reset: () => dispatch({ type: 'RESET' }),
+        setExpiry: (minutes: number) => dispatch({ type: 'SET_CONFIG_EXPIRY', payload: minutes }),
+        setDownloads: (count: number) => dispatch({ type: 'SET_CONFIG_DOWNLOADS', payload: count }),
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
